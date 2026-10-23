@@ -1,121 +1,49 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [apiStatus, setApiStatus] = useState('Comprobando conexion...')
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function checkApi() {
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/health/`, {
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error(`La API respondio con ${response.status}`)
+        }
+
+        const data = await response.json()
+        setApiStatus(data.status === 'ok' ? 'API conectada' : 'Respuesta inesperada de la API')
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setApiStatus('No fue posible conectar con la API')
+        }
+      }
+    }
+
+    checkApi()
+    return () => controller.abort()
+  }, [])
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <main className="flex min-h-screen items-center justify-center bg-stone-50 px-6 text-stone-900">
+      <section className="w-full max-w-xl rounded-2xl border border-stone-200 bg-white p-8 text-left shadow-sm">
+        <p className="text-sm font-medium tracking-widest text-amber-700 uppercase">Alquimia Dulce</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Entorno configurado</h1>
+        <p className="mt-4 text-stone-600">
+          React, Tailwind, Django y PostgreSQL de Supabase estan listos para desarrollar.
+        </p>
+        <p className="mt-6 rounded-lg bg-stone-100 px-4 py-3 text-sm font-medium text-stone-700">
+          Estado del backend: {apiStatus}
+        </p>
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 

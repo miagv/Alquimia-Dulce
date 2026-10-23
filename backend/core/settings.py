@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,21 +20,44 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
+def env_required(name):
+    value = os.getenv(name)
+    if not value:
+        raise ValueError(f'{name} must be set in the environment.')
+    return value
+
+
+def env_bool(name, default=False):
+    return os.getenv(name, str(default)).lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name, default=''):
+    return [value.strip() for value in os.getenv(name, default).split(',') if value.strip()]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x!#vp_@ou=eemxx5*p9a(u(l$sfit4-116_1bnitudlkk(&6hk'
+SECRET_KEY = env_required('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
+    'rest_framework',
+    'apps.accounts',
+    'apps.catalog',
+    'apps.cart',
+    'apps.orders',
+    'apps.custom_orders',
+    'apps.payments',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,6 +76,23 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173')
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 12,
+}
+
+AUTH_USER_MODEL = 'accounts.User'
 
 ROOT_URLCONF = 'core.urls'
 
@@ -78,11 +120,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('SUPABASE_NAME'),
-        'USER': os.getenv('SUPABASE_USER'),
-        'PASSWORD': os.getenv('SUPABASE_PASSWORD'),
-        'HOST': os.getenv('SUPABASE_HOST'),
-        'PORT': os.getenv('SUPABASE_PORT'),
+        'NAME': env_required('SUPABASE_NAME'),
+        'USER': env_required('SUPABASE_USER'),
+        'PASSWORD': env_required('SUPABASE_PASSWORD'),
+        'HOST': env_required('SUPABASE_HOST'),
+        'PORT': env_required('SUPABASE_PORT'),
+        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'sslmode': os.getenv('SUPABASE_SSLMODE', 'require'),
+        },
     }
 }
 
@@ -108,9 +155,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-pe'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Lima'
 
 USE_I18N = True
 
@@ -121,13 +168,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend'
+)
+
+MERCADO_PAGO_ACCESS_TOKEN = os.getenv('MERCADO_PAGO_ACCESS_TOKEN', '')
+MERCADO_PAGO_WEBHOOK_SECRET = os.getenv('MERCADO_PAGO_WEBHOOK_SECRET', '')
+MERCADO_PAGO_SUCCESS_URL = os.getenv('MERCADO_PAGO_SUCCESS_URL', '')
+MERCADO_PAGO_FAILURE_URL = os.getenv('MERCADO_PAGO_FAILURE_URL', '')
+MERCADO_PAGO_PENDING_URL = os.getenv('MERCADO_PAGO_PENDING_URL', '')
+MERCADO_PAGO_NOTIFICATION_URL = os.getenv('MERCADO_PAGO_NOTIFICATION_URL', '')
