@@ -146,6 +146,8 @@ def expire_pending_orders():
 def cancel_order_and_restore_stock(order):
     if not order.stock_released:
         for item in OrderItem.objects.filter(order=order):
+            if not item.variant_id:
+                continue
             variant = ProductVariant.objects.select_for_update().get(pk=item.variant_id)
             variant.stock += item.quantity
             variant.save(update_fields=['stock'])

@@ -96,7 +96,13 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    variant = models.ForeignKey('catalog.ProductVariant', on_delete=models.PROTECT, related_name='order_items')
+    variant = models.ForeignKey(
+        'catalog.ProductVariant',
+        on_delete=models.PROTECT,
+        related_name='order_items',
+        null=True,
+        blank=True,
+    )
     product_name = models.CharField(max_length=180)
     variant_size = models.CharField(max_length=100)
     unit_price = models.PositiveIntegerField(validators=[MinValueValidator(1)])

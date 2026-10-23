@@ -3,6 +3,10 @@ from django.db import models
 
 
 class CustomOrderRequest(models.Model):
+    class DeliveryMethod(models.TextChoices):
+        PICKUP = 'pickup', 'Pickup'
+        DELIVERY = 'delivery', 'Delivery'
+
     class Status(models.TextChoices):
         SUBMITTED = 'submitted', 'Submitted'
         QUOTED = 'quoted', 'Quoted'
@@ -14,6 +18,18 @@ class CustomOrderRequest(models.Model):
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='custom_order_requests'
     )
+    delivery_method = models.CharField(
+        max_length=20,
+        choices=DeliveryMethod.choices,
+        default=DeliveryMethod.PICKUP,
+    )
+    delivery_address = models.ForeignKey(
+        'accounts.Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='custom_order_requests'
+    )
+    delivery_district = models.CharField(max_length=100, blank=True)
+    delivery_address_line = models.CharField(max_length=255, blank=True)
+    delivery_reference = models.CharField(max_length=255, blank=True)
+    delivery_fee = models.PositiveIntegerField(default=0)
     scheduled_date = models.DateField()
     time_slot = models.ForeignKey('orders.TimeSlot', on_delete=models.PROTECT)
     servings = models.PositiveSmallIntegerField()
@@ -36,6 +52,7 @@ class CustomOrderRequest(models.Model):
 class CustomOrderQuote(models.Model):
     request = models.OneToOneField(CustomOrderRequest, on_delete=models.CASCADE, related_name='quote')
     total = models.PositiveIntegerField()
+    delivery_fee = models.PositiveIntegerField(default=0)
     scheduled_date = models.DateField()
     time_slot = models.ForeignKey('orders.TimeSlot', on_delete=models.PROTECT)
     notes = models.TextField(blank=True)

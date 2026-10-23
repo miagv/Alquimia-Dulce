@@ -39,10 +39,18 @@ La API se publica bajo `http://localhost:8000/api/v1/`.
 - `GET /orders/` y `GET /orders/{code}/`: consulta los pedidos propios.
 - `POST /orders/{code}/payment-preference/`: crea o reutiliza la preferencia de Mercado Pago para un pedido reservado.
 - `POST /payments/mercado-pago/webhook/`: recibe eventos de pago de Mercado Pago.
+- `GET` y `POST /custom-orders/`: consulta o crea solicitudes personalizadas propias.
+- `GET /custom-orders/{id}/`: consulta una solicitud personalizada propia.
+- `POST /custom-orders/{id}/accept/`: acepta una cotizacion vigente y crea el pedido reservado.
+- `GET /admin/custom-orders/`: lista solicitudes para administradores.
+- `POST /admin/custom-orders/{id}/quote/`: crea o actualiza una cotizacion administrativa.
+- `POST /admin/custom-orders/{id}/reject/`: rechaza una solicitud administrativa.
 
 El catalogo acepta los parametros opcionales `category`, `search`, `featured=true` e `in_stock=true`. Los importes de variantes se expresan en centimos: `5500` representa `S/ 55.00`.
 
 El checkout recalcula precios en el backend, aplica `S/ 10.00` para delivery, descuenta stock y reserva stock/cupo por 15 minutos. Programa `python manage.py expire_pending_orders` cada minuto en el entorno de despliegue para cancelar reservas vencidas y restaurar el inventario.
+
+Las solicitudes personalizadas admiten retiro o delivery, imagen de referencia, sabor, porciones, tematica y mensaje. El administrador cotiza el importe total, fecha, franja y vigencia. Al aceptarla, se crea un pedido pendiente de pago; el webhook aprobado lo marca como convertido.
 
 ## Mercado Pago
 

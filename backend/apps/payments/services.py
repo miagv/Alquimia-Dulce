@@ -193,6 +193,15 @@ def process_mercado_pago_payment(payment_id):
             if order.status == Order.Status.PENDING_PAYMENT and order.payment_expires_at > timezone.now():
                 order.status = Order.Status.PAID
                 order.save(update_fields=['status', 'updated_at'])
+                from apps.custom_orders.models import CustomOrderQuote
+
+                try:
+                    custom_quote = order.custom_quote
+                except CustomOrderQuote.DoesNotExist:
+                    custom_quote = None
+                if custom_quote:
+                    custom_quote.request.status = custom_quote.request.Status.CONVERTED
+                    custom_quote.request.save(update_fields=['status', 'updated_at'])
         elif payment.status in {Payment.Status.REJECTED, Payment.Status.CANCELLED}:
             if order.status == Order.Status.PENDING_PAYMENT:
                 cancel_order_and_restore_stock(order)

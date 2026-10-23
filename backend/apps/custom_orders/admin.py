@@ -10,7 +10,15 @@ class CustomOrderQuoteInline(admin.StackedInline):
 
 @admin.register(CustomOrderRequest)
 class CustomOrderRequestAdmin(admin.ModelAdmin):
-    list_display = ['id', 'customer', 'scheduled_date', 'time_slot', 'status', 'created_at']
-    list_filter = ['status', 'scheduled_date']
+    list_display = [
+        'id',
+        'customer',
+        'delivery_method',
+        'scheduled_date',
+        'time_slot',
+        'status',
+        'created_at',
+    ]
+    list_filter = ['status', 'delivery_method', 'scheduled_date']
     search_fields = ['customer__email', 'theme', 'flavor']
     inlines = [CustomOrderQuoteInline]
